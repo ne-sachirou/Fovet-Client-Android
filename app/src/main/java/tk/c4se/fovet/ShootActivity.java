@@ -2,6 +2,7 @@ package tk.c4se.fovet;
 
 import android.content.Context;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -15,20 +16,14 @@ import java.io.IOException;
 
 
 public class ShootActivity extends ActionBarActivity {
-    private Camera camera;
+    private CameraPreview preview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shoot);
-        camera = Camera.open();
-        ((FrameLayout) findViewById(R.id.cameraPreview)).addView(new CameraPreview(this, camera));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        camera.release();
+        preview = new CameraPreview(this);
+        ((FrameLayout) findViewById(R.id.cameraPreview)).addView(preview);
     }
 
     @Override
@@ -54,13 +49,12 @@ public class ShootActivity extends ActionBarActivity {
     }
 
     public void shoot(View v) {
-        camera.takePicture(new Camera.ShutterCallback() {
+        preview.takePicture(new AsyncTask<byte[], Integer, Integer>() {
             @Override
-            public void onShutter() {
-            }
-        }, null, new Camera.PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
+            protected Integer doInBackground(byte[]... params) {
+                final byte[] data = params[0];
+                finish();
+                return null;
             }
         });
     }
@@ -68,9 +62,8 @@ public class ShootActivity extends ActionBarActivity {
     public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
         private Camera camera;
 
-        public CameraPreview(Context context, Camera camera) {
+        public CameraPreview(Context context) {
             super(context);
-            this.camera = camera;
             SurfaceHolder holder = getHolder();
             holder.addCallback(this);
             holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -78,6 +71,7 @@ public class ShootActivity extends ActionBarActivity {
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            camera = Camera.open();
             try {
                 camera.setPreviewDisplay(holder);
             } catch (IOException ex) {
@@ -87,10 +81,29 @@ public class ShootActivity extends ActionBarActivity {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            // Camera.Parameters params = camera.getParameters();
+            // Camera.Size size = params.getPictureSize();
+            camera.startPreview();
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            camera.release();
+        }
+
+        public void takePicture(final AsyncTask<byte[], Integer, Integer> pictureCallback) {
+            Camera.ShutterCallback onShutter = new Camera.ShutterCallback() {
+                @Override
+                public void onShutter() {
+                }
+            };
+            Camera.PictureCallback onPicture = new Camera.PictureCallback() {
+                @Override
+                public void onPictureTaken(byte[] data, Camera camera) {
+                    pictureCallback.execute(data);
+                }
+            };
+            camera.takePicture(onShutter, null, onPicture);
         }
     }
 }

@@ -48,4 +48,8 @@ public class Settings {
     public void setToken(String token) {
         pref.edit().putString("token", token).apply();
     }
+
+    public String getRestEndpoint() {
+        return "http://415f58b4.ngrok.com";
+    }
 }

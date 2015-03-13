@@ -24,7 +24,7 @@ public class UsersClientBuilder {
             }
         };
         RestAdapter adapter = new RestAdapter.Builder().
-                setEndpoint("http://10.0.2.2:3000").
+                setEndpoint(Settings.getInstance().getRestEndpoint()).
                 setRequestInterceptor(interceptor).
                 build();
         service = adapter.create(UsersClient.class);
