@@ -8,25 +8,11 @@ import tk.c4se.fovet.Settings;
 /**
  * Created by nesachirou on 15/03/06.
  */
-public class UsersClientBuilder {
+public class UsersClientBuilder extends ClientBuilder {
     @Getter
     private UsersClient service;
 
     public UsersClientBuilder() {
-        RequestInterceptor interceptor = new RequestInterceptor() {
-            @Override
-            public void intercept(RequestFacade request) {
-                final String token = Settings.getInstance().getToken();
-                if (null != token) {
-                    request.addPathParam("token", token);
-                    request.addQueryParam("token", token);
-                }
-            }
-        };
-        RestAdapter adapter = new RestAdapter.Builder().
-                setEndpoint(Settings.getInstance().getRestEndpoint()).
-                setRequestInterceptor(interceptor).
-                build();
-        service = adapter.create(UsersClient.class);
+        service = getAdapter().create(UsersClient.class);
     }
 }

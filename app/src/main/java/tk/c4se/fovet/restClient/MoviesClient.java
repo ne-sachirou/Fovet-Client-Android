@@ -4,10 +4,12 @@ import java.util.List;
 
 import retrofit.client.Response;
 import retrofit.http.DELETE;
-import retrofit.http.Field;
 import retrofit.http.GET;
+import retrofit.http.Multipart;
 import retrofit.http.POST;
+import retrofit.http.Part;
 import retrofit.http.Path;
+import retrofit.mime.TypedFile;
 import rx.Observable;
 import tk.c4se.fovet.entity.Movie;
 
@@ -21,8 +23,9 @@ public interface MoviesClient {
     @GET("/movies/{uuid}")
     Movie show(@Path("uuid") String uuid);
 
+    @Multipart
     @POST("/movies")
-    Movie create();
+    Movie create(@Part("latitude") double latitude, @Part("longitude") double longitude, @Part("file") TypedFile file);
 
     @DELETE("/movies/{uuid}")
     void destroy(@Path("uuid") String uuid);

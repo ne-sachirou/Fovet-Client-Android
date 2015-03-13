@@ -12,7 +12,14 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+
+import retrofit.RetrofitError;
+import retrofit.mime.TypedFile;
+import tk.c4se.fovet.entity.Movie;
+import tk.c4se.fovet.restClient.MoviesClientBuilder;
 
 
 public class ShootActivity extends ActionBarActivity {
@@ -53,6 +60,29 @@ public class ShootActivity extends ActionBarActivity {
             @Override
             protected Integer doInBackground(byte[]... params) {
                 final byte[] data = params[0];
+                final String tmpFileName = "tmp.jpg";
+                try {
+                    FileOutputStream stream = null;
+                    stream = openFileOutput(tmpFileName, MODE_PRIVATE);
+                    stream.write(data, 0, data.length);
+                    stream.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    finish();
+                    return null;
+                }
+                File file = new File(getFilesDir(), tmpFileName);
+                Movie movie = null;
+                try {
+                    movie = new MoviesClientBuilder().getService().create(0, 0, new TypedFile("image/jpeg", file));
+                } catch (RetrofitError ex) {
+                    ex.printStackTrace();
+                    file.delete();
+                    finish();
+                    return null;
+                }
+                movie.save();
+                file.renameTo(new File(getFilesDir(), movie.uuid + ".jpg"));
                 finish();
                 return null;
             }
