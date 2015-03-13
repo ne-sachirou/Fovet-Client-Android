@@ -1,6 +1,7 @@
 package tk.c4se.fovet;
 
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,11 +20,13 @@ import java.io.IOException;
 import retrofit.RetrofitError;
 import retrofit.mime.TypedFile;
 import tk.c4se.fovet.entity.Movie;
+import tk.c4se.fovet.restClient.ForbiddenException;
 import tk.c4se.fovet.restClient.MoviesClientBuilder;
 
 
 public class ShootActivity extends ActionBarActivity {
     private CameraPreview preview;
+    private AsyncTask<Integer, Integer, Integer> activityResultCallback = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +34,15 @@ public class ShootActivity extends ActionBarActivity {
         setContentView(R.layout.activity_shoot);
         preview = new CameraPreview(this);
         ((FrameLayout) findViewById(R.id.cameraPreview)).addView(preview);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (null != activityResultCallback) {
+            activityResultCallback.execute(requestCode, resultCode);
+            activityResultCallback = null;
+        }
     }
 
     @Override
@@ -71,10 +83,33 @@ public class ShootActivity extends ActionBarActivity {
                     finish();
                     return null;
                 }
-                File file = new File(getFilesDir(), tmpFileName);
+                final File file = new File(getFilesDir(), tmpFileName);
                 Movie movie = null;
                 try {
                     movie = new MoviesClientBuilder().getService().create(0, 0, new TypedFile("image/jpeg", file));
+                } catch (ForbiddenException ex) {
+                    activityResultCallback = new AsyncTask<Integer, Integer, Integer>() {
+                        @Override
+                        protected Integer doInBackground(Integer... params) {
+                            int requestCode = params[0];
+                            int resultCode = params[1];
+                            Movie movie = null;
+                            try {
+                                movie = new MoviesClientBuilder().getService().create(0, 0, new TypedFile("image/jpeg", file));
+                            } catch (ForbiddenException | RetrofitError ex) {
+                                ex.printStackTrace();
+                                file.delete();
+                                finish();
+                                return null;
+                            }
+                            movie.save();
+                            file.renameTo(new File(getFilesDir(), movie.uuid + ".jpg"));
+                            finish();
+                            return null;
+                        }
+                    };
+                    new LoginProxy().login(ShootActivity.this, 0);
+                    return null;
                 } catch (RetrofitError ex) {
                     ex.printStackTrace();
                     file.delete();

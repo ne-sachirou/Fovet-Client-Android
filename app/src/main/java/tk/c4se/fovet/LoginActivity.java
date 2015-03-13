@@ -7,10 +7,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import retrofit.RetrofitError;
 import tk.c4se.fovet.entity.User;
-import tk.c4se.fovet.restClient.UsersClient;
-import tk.c4se.fovet.restClient.UsersClientBuilder;
 
 
 public class LoginActivity extends ActionBarActivity {
@@ -49,15 +49,20 @@ public class LoginActivity extends ActionBarActivity {
         (new AsyncTask<Integer, Integer, Integer>() {
             @Override
             protected Integer doInBackground(Integer... params) {
-                Settings settings = Settings.getInstance();
-                UsersClient client = new UsersClientBuilder().getService();
-                int userId = settings.getUserId();
-                if (0 == userId) {
-                    User user = client.create(password);
-                    userId = user.getId();
-                    settings.setUserId(userId);
+                User user = new User();
+                try {
+                    if (0 == new User().getId()) {
+                        new LoginProxy().createUser(password);
+                    } else {
+                        user.setPassword(password);
+                        user.save();
+                        new LoginProxy().refreshToken();
+                    }
+                } catch (RetrofitError ex) {
+                    ex.printStackTrace();
+                    Toast.makeText(LoginActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+                    return null;
                 }
-                settings.setToken(client.login(userId, password).getToken());
                 finish();
                 return null;
             }

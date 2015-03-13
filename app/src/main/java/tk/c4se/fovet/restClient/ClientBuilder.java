@@ -5,6 +5,7 @@ import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import tk.c4se.fovet.Settings;
+import tk.c4se.fovet.entity.User;
 
 /**
  * Created by nesachirou on 15/03/13.
@@ -22,7 +23,7 @@ public abstract class ClientBuilder {
     private class ClientRequestInterceptor implements RequestInterceptor {
         @Override
         public void intercept(RequestFacade request) {
-            String token = Settings.getInstance().getToken();
+            String token = new User().getToken();
             if (null != token) {
                 request.addPathParam("token", token);
                 request.addQueryParam("token", token);
@@ -35,6 +36,12 @@ public abstract class ClientBuilder {
         @Override
         public Throwable handleError(RetrofitError cause) {
             Response res = cause.getResponse();
+            if (null == res) {
+                return cause;
+            }
+            if (403 == res.getStatus()) {
+                return new ForbiddenException(cause);
+            }
             return cause;
         }
     }

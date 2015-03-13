@@ -3,6 +3,8 @@ package tk.c4se.fovet;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import tk.c4se.fovet.entity.User;
+
 /**
  * Created by nesachirou on 15/03/06.
  */
@@ -16,7 +18,7 @@ public class Settings {
     }
 
     public static Settings getInstance() {
-       return ourInstance;
+        return ourInstance;
     }
 
     private SharedPreferences pref;

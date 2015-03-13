@@ -17,9 +17,9 @@ public interface UsersClient {
     User create(@Field("password") String password);
 
     @DELETE("/users/{id}")
-    void destroy(@Path("id") int id);
+    void destroy(@Path("id") int id) throws ForbiddenException;
 
     @FormUrlEncoded
     @POST("/users/login")
-    User login(@Field("id") int id, @Field("password") String password);
+    User login(@Field("id") int id, @Field("password") String password) throws ForbiddenException;
 }

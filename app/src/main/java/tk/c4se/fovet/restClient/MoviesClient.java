@@ -18,24 +18,24 @@ import tk.c4se.fovet.entity.Movie;
  */
 public interface MoviesClient {
     @GET("/movies")
-    List<Movie> index();
+    List<Movie> index() throws ForbiddenException;
 
     @GET("/movies/{uuid}")
-    Movie show(@Path("uuid") String uuid);
+    Movie show(@Path("uuid") String uuid) throws ForbiddenException;
 
     @Multipart
     @POST("/movies")
-    Movie create(@Part("latitude") double latitude, @Part("longitude") double longitude, @Part("file") TypedFile file);
+    Movie create(@Part("latitude") double latitude, @Part("longitude") double longitude, @Part("file") TypedFile file) throws  ForbiddenException;
 
     @DELETE("/movies/{uuid}")
-    void destroy(@Path("uuid") String uuid);
+    void destroy(@Path("uuid") String uuid) throws ForbiddenException;
 
     @GET("/movies/nearby?latitude={lalitude}&longitude={longitude}")
-    List<Movie> nearby(@Path("latitude") double latitude, @Path("longitude") double longitude);
+    List<Movie> nearby(@Path("latitude") double latitude, @Path("longitude") double longitude) throws ForbiddenException;
 
     @GET("/movies/{uuid}/file")
-    Observable<Response> file(@Path("uuid") String uuid);
+    Observable<Response> file(@Path("uuid") String uuid) throws ForbiddenException;
 
     @POST("/movies/{uuid}/thumbup")
-    Movie thumbup(@Path("uuid") String uuid);
+    Movie thumbup(@Path("uuid") String uuid) throws ForbiddenException;
 }

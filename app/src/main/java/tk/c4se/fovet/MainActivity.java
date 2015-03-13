@@ -1,6 +1,7 @@
 package tk.c4se.fovet;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -8,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import ollie.Ollie;
+import tk.c4se.fovet.entity.User;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -23,9 +25,22 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (null == Settings.getInstance().getToken()) {
+        if (null == new User().getToken()) {
             startActivity(new Intent(this, LoginActivity.class));
+            return;
         }
+        (new AsyncTask<Integer, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(Integer... params) {
+                new LoginProxy().login(MainActivity.this, 0);
+                return null;
+            }
+        }).execute();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
