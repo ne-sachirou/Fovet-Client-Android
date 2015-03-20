@@ -25,7 +25,7 @@ public interface MoviesClient {
 
     @Multipart
     @POST("/movies")
-    Movie create(@Part("latitude") double latitude, @Part("longitude") double longitude, @Part("file") TypedFile file) throws  ForbiddenException;
+    Movie create(@Part("latitude") float latitude, @Part("longitude") float longitude, @Part("file") TypedFile file) throws ForbiddenException;
 
     @DELETE("/movies/{uuid}")
     void destroy(@Path("uuid") String uuid) throws ForbiddenException;

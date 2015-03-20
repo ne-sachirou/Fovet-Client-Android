@@ -14,9 +14,9 @@ public class Movie extends Model {
     @Column("count")
     public Integer count = 10;
     @Column("latitude")
-    public Double latitude;
+    public Float latitude;
     @Column("longitude")
-    public Double longitude;
+    public Float longitude;
     @Column("uuid")
     public String uuid;
     @Column("created_at")

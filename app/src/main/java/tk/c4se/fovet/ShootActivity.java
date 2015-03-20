@@ -3,6 +3,8 @@ package tk.c4se.fovet;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Camera;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -27,6 +29,8 @@ import tk.c4se.fovet.restClient.MoviesClientBuilder;
 public class ShootActivity extends ActionBarActivity {
     private CameraPreview preview;
     private AsyncTask<Integer, Integer, Integer> activityResultCallback = null;
+    private LocationManager locationManager;
+    private LocationListener locationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +38,20 @@ public class ShootActivity extends ActionBarActivity {
         setContentView(R.layout.activity_shoot);
         preview = new CameraPreview(this);
         ((FrameLayout) findViewById(R.id.cameraPreview)).addView(preview);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationListener = new LocationUpdator();
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, locationListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        locationManager.removeUpdates(locationListener);
     }
 
     @Override
@@ -74,8 +92,7 @@ public class ShootActivity extends ActionBarActivity {
                 final byte[] data = params[0];
                 final String tmpFileName = "tmp.jpg";
                 try {
-                    FileOutputStream stream = null;
-                    stream = openFileOutput(tmpFileName, MODE_PRIVATE);
+                    FileOutputStream stream = openFileOutput(tmpFileName, MODE_PRIVATE);
                     stream.write(data, 0, data.length);
                     stream.close();
                 } catch (IOException ex) {
@@ -93,9 +110,10 @@ public class ShootActivity extends ActionBarActivity {
                         protected Integer doInBackground(Integer... params) {
                             int requestCode = params[0];
                             int resultCode = params[1];
+                            Settings setting = Settings.getInstance();
                             Movie movie = null;
                             try {
-                                movie = new MoviesClientBuilder().getService().create(0, 0, new TypedFile("image/jpeg", file));
+                                movie = new MoviesClientBuilder().getService().create(setting.getLaititude(), setting.getLongitude(), new TypedFile("image/jpeg", file));
                             } catch (ForbiddenException | RetrofitError ex) {
                                 ex.printStackTrace();
                                 file.delete();

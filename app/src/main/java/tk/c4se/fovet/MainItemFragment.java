@@ -1,12 +1,29 @@
 package tk.c4se.fovet;
 
 import android.app.Activity;
-import android.net.Uri;
-import android.os.Bundle;
 import android.app.Fragment;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import lombok.Getter;
+import retrofit.client.Response;
+import rx.functions.Action1;
+import tk.c4se.fovet.restClient.ForbiddenException;
+import tk.c4se.fovet.restClient.MoviesClientBuilder;
 
 
 /**
@@ -21,6 +38,7 @@ public class MainItemFragment extends Fragment {
     private static final String ARG_MOVIE_ID = "movieId";
     private static final String ARG_COUNT = "count";
 
+    @Getter
     private String movieId;
     private int count;
 
@@ -35,7 +53,7 @@ public class MainItemFragment extends Fragment {
      * this fragment using the provided parameters.
      *
      * @param movieId Parameter 1.
-     * @param count Parameter 2.
+     * @param count   Parameter 2.
      * @return A new instance of fragment MainItemFragment.
      */
     public static MainItemFragment newInstance(String movieId, int count) {
@@ -60,7 +78,47 @@ public class MainItemFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_main_item, container, false);
+        View v = inflater.inflate(R.layout.fragment_main_item, container, false);
+        ((TextView) v.findViewById(R.id.textViewCount)).setText("" + count);
+        final ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
+        final File file = new File(getActivity().getFilesDir(), movieId + ".jpg");
+        if (file.exists()) {
+            Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
+            imageView.setImageBitmap(image);
+        } else {
+            (new AsyncTask<Integer, Integer, Integer>() {
+                @Override
+                protected Integer doInBackground(Integer... params) {
+                    try {
+                        new MoviesClientBuilder().getService().file(movieId).subscribe(new Action1<Response>() {
+                            @Override
+                            public void call(Response response) {
+                                try {
+                                    OutputStream out = getActivity().openFileOutput(file.getName(), Context.MODE_PRIVATE);
+                                    InputStream in = response.getBody().in();
+                                    byte[] buffer = new byte[8];
+                                    int length;
+                                    while ((length = in.read(buffer)) != -1) {
+                                        out.write(buffer, 0, length);
+                                    }
+                                    in.close();
+                                    out.close();
+                                    if (file.exists()) {
+                                        Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
+                                        imageView.setImageBitmap(image);
+                                    }
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        });
+                    } catch (ForbiddenException ex) {
+                    }
+                    return null;
+                }
+            }).execute();
+        }
+        return v;
     }
 
     // TODO: Rename method, update argument and hook method into UI event

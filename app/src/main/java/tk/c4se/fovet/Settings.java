@@ -3,8 +3,6 @@ package tk.c4se.fovet;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import tk.c4se.fovet.entity.User;
-
 /**
  * Created by nesachirou on 15/03/06.
  */
@@ -49,6 +47,22 @@ public class Settings {
 
     public void setToken(String token) {
         pref.edit().putString("token", token).apply();
+    }
+
+    public float getLaititude() {
+        return pref.getFloat("latitude", 0);
+    }
+
+    public void setLatitude(double latitude) {
+        pref.edit().putFloat("latitude", (float) latitude).apply();
+    }
+
+    public float getLongitude() {
+        return pref.getFloat("longitude", 0);
+    }
+
+    public void setLongitude(double longitude) {
+        pref.edit().putFloat("longitude", (float) longitude).apply();
     }
 
     public String getRestEndpoint() {
