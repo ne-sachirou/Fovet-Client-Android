@@ -16,7 +16,6 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import retrofit.RetrofitError;
@@ -90,30 +89,27 @@ public class ShootActivity extends ActionBarActivity {
             @Override
             protected Integer doInBackground(byte[]... params) {
                 final byte[] data = params[0];
-                final String tmpFileName = "tmp.jpg";
+                File _file = null;
                 try {
-                    FileOutputStream stream = openFileOutput(tmpFileName, MODE_PRIVATE);
-                    stream.write(data, 0, data.length);
-                    stream.close();
+                    _file = Movie.saveImageToTmpFile(ShootActivity.this, data);
                 } catch (IOException ex) {
                     ex.printStackTrace();
                     finish();
-                    return null;
                 }
-                final File file = new File(getFilesDir(), tmpFileName);
+                final File file = _file;
+                final Settings settings = Settings.getInstance();
                 Movie movie = null;
                 try {
-                    movie = new MoviesClientBuilder().getService().create(0, 0, new TypedFile("image/jpeg", file));
+                    movie = new MoviesClientBuilder().getService().create(settings.getLaititude(), settings.getLongitude(), new TypedFile("image/jpeg", file));
                 } catch (ForbiddenException ex) {
                     activityResultCallback = new AsyncTask<Integer, Integer, Integer>() {
                         @Override
                         protected Integer doInBackground(Integer... params) {
                             int requestCode = params[0];
                             int resultCode = params[1];
-                            Settings setting = Settings.getInstance();
                             Movie movie = null;
                             try {
-                                movie = new MoviesClientBuilder().getService().create(setting.getLaititude(), setting.getLongitude(), new TypedFile("image/jpeg", file));
+                                movie = new MoviesClientBuilder().getService().create(settings.getLaititude(), settings.getLongitude(), new TypedFile("image/jpeg", file));
                             } catch (ForbiddenException | RetrofitError ex) {
                                 ex.printStackTrace();
                                 file.delete();
@@ -121,7 +117,7 @@ public class ShootActivity extends ActionBarActivity {
                                 return null;
                             }
                             movie.save();
-                            file.renameTo(new File(getFilesDir(), movie.uuid + ".jpg"));
+                            file.renameTo(movie.getFile(ShootActivity.this));
                             finish();
                             return null;
                         }
@@ -135,7 +131,7 @@ public class ShootActivity extends ActionBarActivity {
                     return null;
                 }
                 movie.save();
-                file.renameTo(new File(getFilesDir(), movie.uuid + ".jpg"));
+                file.renameTo(movie.getFile(ShootActivity.this));
                 finish();
                 return null;
             }

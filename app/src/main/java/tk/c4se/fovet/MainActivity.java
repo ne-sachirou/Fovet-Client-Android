@@ -120,7 +120,7 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
         for (Movie movie : movies) {
             boolean isAlraedyShown = false;
             for (MainItemFragment f : itemFragments) {
-                if (f.getMovieId() == movie.uuid) {
+                if (f.getMovie().uuid == movie.uuid) {
                     itemFragments.remove(f);
                     newItemFragments.add(f);
                     isAlraedyShown = true;
@@ -130,7 +130,7 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
             if (isAlraedyShown) {
                 break;
             }
-            MainItemFragment fragment = MainItemFragment.newInstance(movie.uuid, movie.count);
+            MainItemFragment fragment = MainItemFragment.newInstance(movie.uuid);
             newItemFragments.add(fragment);
             ft.add(R.id.ItemsHolder, fragment);
         }

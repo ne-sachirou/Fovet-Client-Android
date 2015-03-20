@@ -53,16 +53,16 @@ public class Settings {
         return pref.getFloat("latitude", 0);
     }
 
-    public void setLatitude(double latitude) {
-        pref.edit().putFloat("latitude", (float) latitude).apply();
+    public void setLatitude(float latitude) {
+        pref.edit().putFloat("latitude", latitude).apply();
     }
 
     public float getLongitude() {
         return pref.getFloat("longitude", 0);
     }
 
-    public void setLongitude(double longitude) {
-        pref.edit().putFloat("longitude", (float) longitude).apply();
+    public void setLongitude(float longitude) {
+        pref.edit().putFloat("longitude", longitude).apply();
     }
 
     public String getRestEndpoint() {

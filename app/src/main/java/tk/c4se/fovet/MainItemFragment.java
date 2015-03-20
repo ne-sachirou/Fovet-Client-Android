@@ -2,9 +2,6 @@ package tk.c4se.fovet;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,16 +11,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import lombok.Getter;
 import ollie.query.Select;
 import retrofit.RetrofitError;
-import retrofit.client.Response;
-import rx.functions.Action1;
 import tk.c4se.fovet.entity.Movie;
 import tk.c4se.fovet.restClient.ForbiddenException;
 import tk.c4se.fovet.restClient.MoviesClientBuilder;
@@ -40,12 +30,9 @@ import tk.c4se.fovet.restClient.NotFoundException;
  */
 public class MainItemFragment extends Fragment {
     private static final String ARG_MOVIE_ID = "movieId";
-    private static final String ARG_COUNT = "count";
 
     @Getter
-    private String movieId;
-    private int count;
-
+    private Movie movie;
     private OnFragmentInteractionListener mListener;
 
     public MainItemFragment() {
@@ -57,14 +44,12 @@ public class MainItemFragment extends Fragment {
      * this fragment using the provided parameters.
      *
      * @param movieId Parameter 1.
-     * @param count   Parameter 2.
      * @return A new instance of fragment MainItemFragment.
      */
-    public static MainItemFragment newInstance(String movieId, int count) {
+    public static MainItemFragment newInstance(String movieId) {
         MainItemFragment fragment = new MainItemFragment();
         Bundle args = new Bundle();
         args.putString(ARG_MOVIE_ID, movieId);
-        args.putInt(ARG_COUNT, count);
         fragment.setArguments(args);
         return fragment;
     }
@@ -73,8 +58,11 @@ public class MainItemFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            movieId = getArguments().getString(ARG_MOVIE_ID);
-            count = getArguments().getInt(ARG_COUNT);
+            String movieId = getArguments().getString(ARG_MOVIE_ID);
+            movie = Select.from(Movie.class).where("uuid = ?", movieId).fetchSingle();
+            if (null == movie) {
+                throw new NullPointerException();
+            }
         }
     }
 
@@ -83,9 +71,9 @@ public class MainItemFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_main_item, container, false);
-        ((TextView) v.findViewById(R.id.textViewCount)).setText("" + count);
+        ((TextView) v.findViewById(R.id.textViewCount)).setText("" + movie.count);
         ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
-        attachImage(imageView, movieId);
+        movie.attachImageToView(getActivity(), imageView);
         imageView.setOnClickListener(new OnClickImageView(v));
         return v;
     }
@@ -107,49 +95,9 @@ public class MainItemFragment extends Fragment {
         mListener = null;
     }
 
-    private void attachImage(final ImageView v, final String movieId) {
-        final File file = new File(getActivity().getFilesDir(), movieId + ".jpg");
-        if (file.exists()) {
-            Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
-            v.setImageBitmap(image);
-        } else {
-            (new AsyncTask<Integer, Integer, Integer>() {
-                @Override
-                protected Integer doInBackground(Integer... params) {
-                    try {
-                        new MoviesClientBuilder().getService().file(movieId).subscribe(new Action1<Response>() {
-                            @Override
-                            public void call(Response response) {
-                                try {
-                                    OutputStream out = getActivity().openFileOutput(file.getName(), Context.MODE_PRIVATE);
-                                    InputStream in = response.getBody().in();
-                                    byte[] buffer = new byte[1024];
-                                    int length;
-                                    while ((length = in.read(buffer)) != -1) {
-                                        out.write(buffer, 0, length);
-                                    }
-                                    in.close();
-                                    out.close();
-                                    if (file.exists()) {
-                                        Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
-                                        v.setImageBitmap(image);
-                                    }
-                                } catch (IOException ex) {
-                                    ex.printStackTrace();
-                                }
-                            }
-                        });
-                    } catch (ForbiddenException | NotFoundException | RetrofitError ex) {
-                        ex.printStackTrace();
-                    }
-                    return null;
-                }
-            }).execute();
-        }
-    }
-
     private void remove(Movie movie) {
         if (null != movie) {
+            movie.removeCache(getActivity());
             movie.delete();
         }
         (new AsyncTask<String, Integer, Integer>() {
@@ -164,7 +112,7 @@ public class MainItemFragment extends Fragment {
                 }
                 return null;
             }
-        }).execute(movieId);
+        }).execute(movie.uuid);
         ((OnFragmentInteractionListener) getActivity()).removeMainItemFragment(this);
     }
 
@@ -182,9 +130,8 @@ public class MainItemFragment extends Fragment {
             (new AsyncTask<Integer, Integer, Integer>() {
                 @Override
                 protected Integer doInBackground(Integer... params) {
-                    Movie movie = Select.from(Movie.class).where("uuid = ?", movieId).fetchSingle();
                     try {
-                        new MoviesClientBuilder().getService().thumbup(movieId);
+                        new MoviesClientBuilder().getService().thumbup(movie.uuid);
                     } catch (ForbiddenException ex) {
                         return null;
                     } catch (NotFoundException ex) {
@@ -198,16 +145,15 @@ public class MainItemFragment extends Fragment {
                         remove(null);
                         return null;
                     }
-                    --count;
-                    movie.count = count;
+                    --movie.count;
                     movie.save();
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            textViewCount.setText("" + count);
+                            textViewCount.setText("" + movie.count);
                         }
                     });
-                    if (count <= 0) {
+                    if (movie.count <= 0) {
                         remove(movie);
                     }
                     return null;
