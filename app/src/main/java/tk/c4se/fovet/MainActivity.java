@@ -5,17 +5,19 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ollie.Ollie;
 import ollie.query.Select;
@@ -23,8 +25,9 @@ import tk.c4se.fovet.entity.Movie;
 import tk.c4se.fovet.entity.User;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements MainItemFragment.OnFragmentInteractionListener {
     private List<MainItemFragment> itemFragments = new ArrayList<>();
+    private Timer redrawTimer;
     private LocationManager locationManager;
     private LocationListener locationListener;
 
@@ -34,8 +37,6 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         Settings.init(this);
         Ollie.with(this).setName("fovet.db").setVersion(1).setLogLevel(Ollie.LogLevel.FULL).setCacheSize(100).init();
-        redrawMovies();
-        Toast.makeText(this, itemFragments.size() + " Movies", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -52,6 +53,13 @@ public class MainActivity extends ActionBarActivity {
                 return null;
             }
         }).execute();
+        redrawTimer = new Timer(true);
+        redrawTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                redrawMovies();
+            }
+        }, 0, 10000);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new LocationUpdator();
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 31000, 100, locationListener);
@@ -60,6 +68,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        redrawTimer.cancel();
         locationManager.removeUpdates(locationListener);
     }
 
@@ -88,6 +97,10 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
     }
 
     public void startShoot(View v) {

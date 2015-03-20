@@ -31,7 +31,7 @@ public interface MoviesClient {
     void destroy(@Path("uuid") String uuid) throws ForbiddenException;
 
     @GET("/movies/nearby?latitude={lalitude}&longitude={longitude}")
-    List<Movie> nearby(@Path("latitude") double latitude, @Path("longitude") double longitude) throws ForbiddenException;
+    List<Movie> nearby(@Path("latitude") float latitude, @Path("longitude") float longitude) throws ForbiddenException;
 
     @GET("/movies/{uuid}/file")
     Observable<Response> file(@Path("uuid") String uuid) throws ForbiddenException;

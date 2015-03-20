@@ -155,6 +155,7 @@ public class ShootActivity extends ActionBarActivity {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             camera = Camera.open();
+            camera.setDisplayOrientation(90);
             try {
                 camera.setPreviewDisplay(holder);
             } catch (IOException ex) {
@@ -164,8 +165,9 @@ public class ShootActivity extends ActionBarActivity {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            // Camera.Parameters params = camera.getParameters();
-            // Camera.Size size = params.getPictureSize();
+            Camera.Parameters params = camera.getParameters();
+            params.setRotation(90);
+            camera.setParameters(params);
             camera.startPreview();
         }
 
