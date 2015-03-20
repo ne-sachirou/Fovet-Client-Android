@@ -5,7 +5,6 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -100,7 +99,12 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
+    public void removeMainItemFragment(MainItemFragment fragment) {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ft.remove(fragment);
+        itemFragments.remove(fragment);
+        ft.commit();
     }
 
     public void startShoot(View v) {

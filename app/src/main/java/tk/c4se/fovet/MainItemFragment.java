@@ -5,9 +5,9 @@ import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +20,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import lombok.Getter;
+import ollie.query.Select;
+import retrofit.RetrofitError;
 import retrofit.client.Response;
 import rx.functions.Action1;
+import tk.c4se.fovet.entity.Movie;
 import tk.c4se.fovet.restClient.ForbiddenException;
 import tk.c4se.fovet.restClient.MoviesClientBuilder;
 
@@ -80,11 +83,39 @@ public class MainItemFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_main_item, container, false);
         ((TextView) v.findViewById(R.id.textViewCount)).setText("" + count);
-        final ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
+        ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
+        attachImage(imageView, movieId);
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickImageView(v);
+            }
+        });
+        return v;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnFragmentInteractionListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    private void attachImage(final ImageView v, final String movieId) {
         final File file = new File(getActivity().getFilesDir(), movieId + ".jpg");
         if (file.exists()) {
             Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
-            imageView.setImageBitmap(image);
+            v.setImageBitmap(image);
         } else {
             (new AsyncTask<Integer, Integer, Integer>() {
                 @Override
@@ -105,7 +136,7 @@ public class MainItemFragment extends Fragment {
                                     out.close();
                                     if (file.exists()) {
                                         Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
-                                        imageView.setImageBitmap(image);
+                                        v.setImageBitmap(image);
                                     }
                                 } catch (IOException ex) {
                                     ex.printStackTrace();
@@ -118,31 +149,43 @@ public class MainItemFragment extends Fragment {
                 }
             }).execute();
         }
-        return v;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        try {
-            mListener = (OnFragmentInteractionListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
+    public void onClickImageView(View v) {
+        final TextView textViewCount = (TextView) getView().findViewById(R.id.textViewCount);
+        final Handler handler = new Handler();
+        (new AsyncTask<Integer, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(Integer... params) {
+                try {
+                    new MoviesClientBuilder().getService().thumbup(movieId);
+                } catch (ForbiddenException ex) {
+                    return null;
+                } catch (RetrofitError ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+                Movie movie = Select.from(Movie.class).where("uuid = ?", movieId).fetchSingle();
+                if (null == movie) {
+                    ((OnFragmentInteractionListener) getActivity()).removeMainItemFragment(MainItemFragment.this);
+                    return null;
+                }
+                --count;
+                movie.count = count;
+                movie.save();
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        textViewCount.setText("" + count);
+                    }
+                });
+                if (count <= 0) {
+                    movie.delete();
+                    ((OnFragmentInteractionListener) getActivity()).removeMainItemFragment(MainItemFragment.this);
+                }
+                return null;
+            }
+        }).execute();
     }
 
     /**
@@ -156,8 +199,7 @@ public class MainItemFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
+        public void removeMainItemFragment(MainItemFragment fragment);
     }
 
 }
