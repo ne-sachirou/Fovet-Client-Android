@@ -27,6 +27,7 @@ import rx.functions.Action1;
 import tk.c4se.fovet.entity.Movie;
 import tk.c4se.fovet.restClient.ForbiddenException;
 import tk.c4se.fovet.restClient.MoviesClientBuilder;
+import tk.c4se.fovet.restClient.NotFoundException;
 
 
 /**
@@ -85,12 +86,7 @@ public class MainItemFragment extends Fragment {
         ((TextView) v.findViewById(R.id.textViewCount)).setText("" + count);
         ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
         attachImage(imageView, movieId);
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickImageView(v);
-            }
-        });
+        imageView.setOnClickListener(new OnClickImageView(v));
         return v;
     }
 
@@ -127,7 +123,7 @@ public class MainItemFragment extends Fragment {
                                 try {
                                     OutputStream out = getActivity().openFileOutput(file.getName(), Context.MODE_PRIVATE);
                                     InputStream in = response.getBody().in();
-                                    byte[] buffer = new byte[8];
+                                    byte[] buffer = new byte[1024];
                                     int length;
                                     while ((length = in.read(buffer)) != -1) {
                                         out.write(buffer, 0, length);
@@ -143,7 +139,8 @@ public class MainItemFragment extends Fragment {
                                 }
                             }
                         });
-                    } catch (ForbiddenException ex) {
+                    } catch (ForbiddenException | NotFoundException | RetrofitError ex) {
+                        ex.printStackTrace();
                     }
                     return null;
                 }
@@ -151,41 +148,72 @@ public class MainItemFragment extends Fragment {
         }
     }
 
-    public void onClickImageView(View v) {
-        final TextView textViewCount = (TextView) getView().findViewById(R.id.textViewCount);
-        final Handler handler = new Handler();
-        (new AsyncTask<Integer, Integer, Integer>() {
+    private void remove(Movie movie) {
+        if (null != movie) {
+            movie.delete();
+        }
+        (new AsyncTask<String, Integer, Integer>() {
             @Override
-            protected Integer doInBackground(Integer... params) {
+            protected Integer doInBackground(String... params) {
                 try {
-                    new MoviesClientBuilder().getService().thumbup(movieId);
-                } catch (ForbiddenException ex) {
-                    return null;
+                    String movieId = params[0];
+                    new MoviesClientBuilder().getService().destroy(movieId);
+                } catch (ForbiddenException | NotFoundException ex) {
                 } catch (RetrofitError ex) {
                     ex.printStackTrace();
-                    return null;
-                }
-                Movie movie = Select.from(Movie.class).where("uuid = ?", movieId).fetchSingle();
-                if (null == movie) {
-                    ((OnFragmentInteractionListener) getActivity()).removeMainItemFragment(MainItemFragment.this);
-                    return null;
-                }
-                --count;
-                movie.count = count;
-                movie.save();
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        textViewCount.setText("" + count);
-                    }
-                });
-                if (count <= 0) {
-                    movie.delete();
-                    ((OnFragmentInteractionListener) getActivity()).removeMainItemFragment(MainItemFragment.this);
                 }
                 return null;
             }
-        }).execute();
+        }).execute(movieId);
+        ((OnFragmentInteractionListener) getActivity()).removeMainItemFragment(this);
+    }
+
+    private class OnClickImageView implements View.OnClickListener {
+        private View view;
+
+        public OnClickImageView(View view) {
+            this.view = view;
+        }
+
+        @Override
+        public void onClick(View v) {
+            final TextView textViewCount = (TextView) view.findViewById(R.id.textViewCount);
+            final Handler handler = new Handler();
+            (new AsyncTask<Integer, Integer, Integer>() {
+                @Override
+                protected Integer doInBackground(Integer... params) {
+                    Movie movie = Select.from(Movie.class).where("uuid = ?", movieId).fetchSingle();
+                    try {
+                        new MoviesClientBuilder().getService().thumbup(movieId);
+                    } catch (ForbiddenException ex) {
+                        return null;
+                    } catch (NotFoundException ex) {
+                        remove(movie);
+                        return null;
+                    } catch (RetrofitError ex) {
+                        ex.printStackTrace();
+                        return null;
+                    }
+                    if (null == movie) {
+                        remove(null);
+                        return null;
+                    }
+                    --count;
+                    movie.count = count;
+                    movie.save();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            textViewCount.setText("" + count);
+                        }
+                    });
+                    if (count <= 0) {
+                        remove(movie);
+                    }
+                    return null;
+                }
+            }).execute();
+        }
     }
 
     /**

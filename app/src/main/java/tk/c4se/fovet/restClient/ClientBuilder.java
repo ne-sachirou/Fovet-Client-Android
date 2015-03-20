@@ -28,7 +28,7 @@ public abstract class ClientBuilder {
     protected RestAdapter getAdapter() {
         Gson gson = new GsonBuilder().
                 // setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").
-                registerTypeAdapter(Date.class, new DateDeserializer()).
+                        registerTypeAdapter(Date.class, new DateDeserializer()).
                 create();
         return new RestAdapter.Builder().
                 setEndpoint(Settings.getInstance().getRestEndpoint()).
@@ -39,7 +39,7 @@ public abstract class ClientBuilder {
                 build();
     }
 
-    private class DateDeserializer implements JsonDeserializer<Date>{
+    private class DateDeserializer implements JsonDeserializer<Date> {
         @Override
         public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             String str = json.getAsJsonPrimitive().getAsString();
@@ -47,7 +47,7 @@ public abstract class ClientBuilder {
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
             try {
                 return format.parse(str);
-            }catch(ParseException ex) {
+            } catch (ParseException ex) {
                 ex.printStackTrace();
                 return null;
             }
@@ -75,6 +75,9 @@ public abstract class ClientBuilder {
             }
             if (403 == res.getStatus()) {
                 return new ForbiddenException(cause);
+            }
+            if (404 == res.getStatus()) {
+                return new NotFoundException(cause);
             }
             return cause;
         }

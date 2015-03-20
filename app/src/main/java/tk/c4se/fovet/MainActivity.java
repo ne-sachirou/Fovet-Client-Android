@@ -61,7 +61,7 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
         }, 0, 10000);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new LocationUpdator();
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 31000, 100, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 11000, 100, locationListener);
     }
 
     @Override
