@@ -15,7 +15,9 @@ import java.util.Date;
 
 import ollie.Model;
 import ollie.annotation.Column;
+import ollie.annotation.NotNull;
 import ollie.annotation.Table;
+import ollie.annotation.Unique;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import rx.functions.Action1;
@@ -37,12 +39,17 @@ public class Movie extends Model {
     }
 
     @Column("count")
+    @NotNull
     public Integer count = 10;
     @Column("latitude")
+    @NotNull
     public Float latitude;
     @Column("longitude")
+    @NotNull
     public Float longitude;
     @Column("uuid")
+    @Unique
+    @NotNull
     public String uuid;
     @Column("created_at")
     public Date created_at;

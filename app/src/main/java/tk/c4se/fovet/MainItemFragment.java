@@ -130,14 +130,13 @@ public class MainItemFragment extends Fragment {
             (new AsyncTask<Integer, Integer, Integer>() {
                 @Override
                 protected Integer doInBackground(Integer... params) {
+                    Movie resultMovie = null;
                     try {
-                        new MoviesClientBuilder().getService().thumbup(movie.uuid);
-                    } catch (ForbiddenException ex) {
-                        return null;
+                        resultMovie = new MoviesClientBuilder().getService().thumbup(movie.uuid);
                     } catch (NotFoundException ex) {
                         remove(movie);
                         return null;
-                    } catch (RetrofitError ex) {
+                    } catch (ForbiddenException | RetrofitError ex) {
                         ex.printStackTrace();
                         return null;
                     }
@@ -145,7 +144,8 @@ public class MainItemFragment extends Fragment {
                         remove(null);
                         return null;
                     }
-                    --movie.count;
+                    movie.count = resultMovie.count;
+                    movie.updated_at = resultMovie.updated_at;
                     movie.save();
                     handler.post(new Runnable() {
                         @Override

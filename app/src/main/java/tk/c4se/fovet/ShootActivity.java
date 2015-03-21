@@ -44,7 +44,7 @@ public class ShootActivity extends ActionBarActivity {
         super.onStart();
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new LocationUpdator();
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30000, 10, locationListener);
     }
 
     @Override

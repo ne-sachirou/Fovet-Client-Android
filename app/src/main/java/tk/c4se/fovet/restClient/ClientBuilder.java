@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import retrofit.RequestInterceptor;
@@ -27,8 +28,7 @@ import tk.c4se.fovet.entity.User;
 public abstract class ClientBuilder {
     protected RestAdapter getAdapter() {
         Gson gson = new GsonBuilder().
-                // setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").
-                        registerTypeAdapter(Date.class, new DateDeserializer()).
+                registerTypeAdapter(Date.class, new DateDeserializer()).
                 create();
         return new RestAdapter.Builder().
                 setEndpoint(Settings.getInstance().getRestEndpoint()).
@@ -43,7 +43,7 @@ public abstract class ClientBuilder {
         @Override
         public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             String str = json.getAsJsonPrimitive().getAsString();
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
             try {
                 return format.parse(str);
