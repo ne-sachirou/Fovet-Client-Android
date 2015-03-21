@@ -95,8 +95,8 @@ public class MainItemFragment extends Fragment {
         mListener = null;
     }
 
-    private void redraw(View view){
-        ((TextView) view.findViewById(R.id.textViewCount)).setText("" + movie.count);
+    private void redraw(View fragmentView){
+        ((TextView) fragmentView.findViewById(R.id.textViewCount)).setText("" + movie.count);
     }
 
     private void remove(Movie movie) {
@@ -121,10 +121,10 @@ public class MainItemFragment extends Fragment {
     }
 
     private class OnClickImageView implements View.OnClickListener {
-        private View view;
+        private View fragmentView;
 
-        public OnClickImageView(View view) {
-            this.view = view;
+        public OnClickImageView(View fragmentView) {
+            this.fragmentView = fragmentView;
         }
 
         @Override
@@ -153,7 +153,7 @@ public class MainItemFragment extends Fragment {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            redraw(view);
+                            redraw(fragmentView);
                         }
                     });
                     if (movie.count <= 0) {

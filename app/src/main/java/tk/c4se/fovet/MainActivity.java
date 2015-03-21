@@ -57,12 +57,13 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
         redrawTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                redrawMovies();
+                redrawMoviesDiff();
             }
-        }, 0, 30000);
+        }, 30000, 30000);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new LocationUpdator();
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 30000, 10, locationListener);
+        redrawMoviesAll();
     }
 
     @Override
@@ -112,7 +113,24 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
         startActivity(new Intent(this, ShootActivity.class));
     }
 
-    private void redrawMovies() {
+    private void redrawMoviesAll() {
+        List<Movie> movies = Select.from(Movie.class).orderBy("created_at").fetch();
+        Collections.reverse(movies);
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        for (MainItemFragment f : itemFragments) {
+            ft.remove(f);
+        }
+        itemFragments = new ArrayList<>();
+        for (Movie movie : movies){
+            MainItemFragment fragment = MainItemFragment.newInstance(movie.uuid);
+            itemFragments.add(fragment);
+            ft.add(R.id.ItemsHolder, fragment);
+        }
+        ft.commit();
+    }
+
+    private void redrawMoviesDiff() {
         List<Movie> movies = Select.from(Movie.class).orderBy("created_at").fetch();
         Collections.reverse(movies);
         FragmentManager fm = getFragmentManager();
