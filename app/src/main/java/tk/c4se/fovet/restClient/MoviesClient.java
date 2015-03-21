@@ -28,7 +28,7 @@ public interface MoviesClient {
     Movie create(@Part("latitude") float latitude, @Part("longitude") float longitude, @Part("file") TypedFile file) throws ForbiddenException;
 
     @DELETE("/movies/{uuid}")
-    void destroy(@Path("uuid") String uuid) throws ForbiddenException, NotFoundException;
+    Response destroy(@Path("uuid") String uuid) throws ForbiddenException, NotFoundException;
 
     @GET("/movies/nearby?latitude={lalitude}&longitude={longitude}")
     List<Movie> nearby(@Path("latitude") float latitude, @Path("longitude") float longitude) throws ForbiddenException;

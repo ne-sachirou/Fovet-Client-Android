@@ -71,10 +71,10 @@ public class MainItemFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_main_item, container, false);
-        ((TextView) v.findViewById(R.id.textViewCount)).setText("" + movie.count);
         ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
         movie.attachImageToView(getActivity(), imageView);
         imageView.setOnClickListener(new OnClickImageView(v));
+        redraw(v);
         return v;
     }
 
@@ -93,6 +93,10 @@ public class MainItemFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    private void redraw(View view){
+        ((TextView) view.findViewById(R.id.textViewCount)).setText("" + movie.count);
     }
 
     private void remove(Movie movie) {
@@ -125,7 +129,6 @@ public class MainItemFragment extends Fragment {
 
         @Override
         public void onClick(View v) {
-            final TextView textViewCount = (TextView) view.findViewById(R.id.textViewCount);
             final Handler handler = new Handler();
             (new AsyncTask<Integer, Integer, Integer>() {
                 @Override
@@ -150,7 +153,7 @@ public class MainItemFragment extends Fragment {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            textViewCount.setText("" + movie.count);
+                            redraw(view);
                         }
                     });
                     if (movie.count <= 0) {

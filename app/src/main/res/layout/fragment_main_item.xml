@@ -12,13 +12,15 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/imageView" />
+            android:id="@+id/imageView"
+            android:layout_gravity="center_horizontal" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="10"
-            android:id="@+id/textViewCount" />
+            android:id="@+id/textViewCount"
+            android:layout_gravity="right" />
 
     </LinearLayout>
 </FrameLayout>

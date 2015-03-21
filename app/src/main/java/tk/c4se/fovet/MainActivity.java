@@ -8,6 +8,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -58,7 +59,7 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
             public void run() {
                 redrawMovies();
             }
-        }, 0, 10000);
+        }, 0, 30000);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new LocationUpdator();
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 30000, 10, locationListener);
@@ -120,7 +121,7 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
         for (Movie movie : movies) {
             boolean isAlraedyShown = false;
             for (MainItemFragment f : itemFragments) {
-                if (f.getMovie().uuid == movie.uuid) {
+                if (movie.uuid.equals(f.getMovie().uuid)) {
                     itemFragments.remove(f);
                     newItemFragments.add(f);
                     isAlraedyShown = true;
@@ -128,13 +129,16 @@ public class MainActivity extends ActionBarActivity implements MainItemFragment.
                 }
             }
             if (isAlraedyShown) {
-                break;
+                Log.d("MA/redrawMovies", movie.uuid + " is already shown.");
+                continue;
             }
             MainItemFragment fragment = MainItemFragment.newInstance(movie.uuid);
             newItemFragments.add(fragment);
             ft.add(R.id.ItemsHolder, fragment);
+            Log.d("MA/redrawMovies", movie.uuid + " will be shown.");
         }
         for (MainItemFragment f : itemFragments) {
+            Log.d("MA/redrawMovies", f.getMovie().uuid + " will be removed.");
             ft.remove(f);
         }
         itemFragments = newItemFragments;

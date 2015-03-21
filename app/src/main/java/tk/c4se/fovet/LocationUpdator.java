@@ -38,6 +38,10 @@ public class LocationUpdator implements LocationListener {
         Settings settings = Settings.getInstance();
         settings.setLatitude(latitude);
         settings.setLongitude(longitude);
+        fetchAndSaveNearby(latitude, longitude);
+    }
+
+    private void fetchAndSaveNearby(float latitude, float longitude) {
         (new AsyncTask<Float, Integer, Integer>() {
             @Override
             protected Integer doInBackground(Float... params) {
@@ -47,13 +51,24 @@ public class LocationUpdator implements LocationListener {
                 try {
                     movies = new MoviesClientBuilder().getService().nearby(latitude, longitude);
                 } catch (ForbiddenException ex) {
-                    return null;
+                    try {
+                        new LoginProxy().refreshToken();
+                    } catch (RetrofitError ex2) {
+                        ex2.printStackTrace();
+                        return null;
+                    }
+                    try {
+                        movies = new MoviesClientBuilder().getService().nearby(latitude, longitude);
+                    } catch (ForbiddenException | RetrofitError ex2) {
+                        ex2.printStackTrace();
+                        return null;
+                    }
                 } catch (RetrofitError ex) {
                     ex.printStackTrace();
                     return null;
                 }
                 for (Movie movie : movies) {
-                    if (null == Select.from(Movie.class).where("uuid = ?", movie.uuid).fetchSingle()) {
+                    if (0 == Select.columns("COUNT(*)").from(Movie.class).where("uuid = ?", movie.uuid).fetchValue(Integer.class)) {
                         movie.save();
                     }
                 }
